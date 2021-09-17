@@ -1,0 +1,95 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Sep 17 15:20:50 2021
+
+@author: alex arzt
+
+Piplines are a very handy way to chain together multiple steps, 
+i.e. the output of each step is used as the input for the next step. 
+
+For ML problems, this is very nice since we can apply the same preprocessing steps
+to train and test set. This is much better done in Python than in R. 
+
+This script is just a practice script of mine for a few classifiers.
+
+"""
+
+import warnings 
+warnings.filterwarnings("ignore")
+
+#import all necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+
+data = pd.read_csv("pima-indians-diabetes.csv", header=None)
+
+data.columns = ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
+                "Insulin", "BMI", "DPF", "Age","Class"]
+
+
+#Split data 80/20 split
+
+X_train, X_test, y_train, y_test = train_test_split(data.iloc[:,0:7], data.iloc[:, [8]], 
+                                                    test_size = 0.2, random_state = 0)
+
+"""
+Our pipeline:
+    1. Preprocess using Min/Max Scaler
+    2. Conduct PCA to reduce dimensionality of feature space, i.e. reduce #features
+    3. fit classifier of our choice
+
+"""
+
+# logistic regression pipeline
+lr_pipeline = Pipeline([("scale", MinMaxScaler()), 
+                        ("pca", PCA(n_components=3)), 
+                        ("lr", LogisticRegression())])
+
+
+# decision tree pipeline
+dt_pipeline = Pipeline([("scale", MinMaxScaler()), 
+                        ("pca", PCA(n_components=3)), 
+                        ("dt", DecisionTreeClassifier())])
+
+# random forest pipeline
+rf_pipeline = Pipeline([("scale", MinMaxScaler()), 
+                        ("pca", PCA(n_components=3)), 
+                        ("rf", LogisticRegression())])
+
+#pack pipelines in a list
+pipelines = [lr_pipeline, dt_pipeline, rf_pipeline]
+
+#defining variables for choosing best model
+recall = 0.0
+classifier = 0
+pipeline = ""
+
+
+#create dictionary of pipelines and models 
+PDict = {0: "LogReg" , 1: "DecTree", 2: "RandForest"}
+
+#fit the all models (actually, all pipeline objects)
+for x in pipelines: 
+    x.fit(X_train, y_train)
+
+#get test recall for all models
+for i, model in enumerate(pipelines):
+    print("{} Test Accuracy: {}".format(PDict[i], model.score(X_test,y_test)))
+    
+
+
+
+
+
+
+
+
+
+
